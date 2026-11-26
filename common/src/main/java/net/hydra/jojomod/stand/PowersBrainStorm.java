@@ -84,9 +84,12 @@ public class PowersHeyYa extends NewDashPreset {
     @Override
     public void tickStandRejection(MobEffectInstance effect) {
         if (!this.getSelf().level().isClientSide()) {
-            if (effect.getDuration() == 50) {
-                yapSounds();
-            }
+            if (effect.getDuration() == 15) {
+                if (!(self instanceof Player pl && pl.isCreative())) {
+                    self.addEffect(new MobEffectInstance(
+                            ModEffects.HAZE_VIRUS, 200));
+                    }
+                }
         }
     }
 
