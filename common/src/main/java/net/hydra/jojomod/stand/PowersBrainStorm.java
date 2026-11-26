@@ -47,6 +47,30 @@ public class PowersHeyYa extends NewDashPreset {
     public StandPowers generateStandPowers(LivingEntity entity) {
         return new PowersHeyYa(entity);
 
+
+
+    @Override
+    public void powerActivate(PowerContext context) {
+        switch (context)
+        {
+            case SKILL_1_NORMAL, SKILL_1_CROUCH-> {
+             
+            }
+            case SKILL_2_NORMAL, SKILL_2_CROUCH-> {
+
+            }
+            case SKILL_3_NORMAL, SKILL_3_CROUCH -> {
+
+            }
+            case SKILL_4_NORMAL, SKILL_4_CROUCH -> {
+
+            }
+        }
+    }
+
+
+
+        
     }
     public boolean canSummonStandAsEntity(){
         return false;
