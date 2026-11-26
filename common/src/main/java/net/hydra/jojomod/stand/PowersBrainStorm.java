@@ -87,7 +87,7 @@ public class PowersHeyYa extends NewDashPreset {
             if (effect.getDuration() == 15) {
                 if (!(self instanceof Player pl && pl.isCreative())) {
                     self.addEffect(new MobEffectInstance(
-                            ModEffects.HAZE_VIRUS, 200));
+                            ModEffects.BLEED, 200));
                     }
                 }
         }
