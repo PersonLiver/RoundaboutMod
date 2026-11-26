@@ -46,11 +46,7 @@ public class PowersHeyYa extends NewDashPreset {
     @Override
     public StandPowers generateStandPowers(LivingEntity entity) {
         return new PowersHeyYa(entity);
-    }
 
-
-    public boolean dangerYappingOn(){
-        return getStandUserSelf().roundabout$getUniqueStandModeToggle();
     }
     public boolean canSummonStandAsEntity(){
         return false;
@@ -59,138 +55,7 @@ public class PowersHeyYa extends NewDashPreset {
     public boolean rendersPlayer(){
         return true;
     }
-    @Override
-    public void renderIcons(GuiGraphics context, int x, int y) {
-        // code for advanced icons
 
-        if (dangerYappingOn())
-            setSkillIcon(context, x, y, 1, StandIcons.DANGER_YAP_DISABLE, PowerIndex.SKILL_1);
-        else
-            setSkillIcon(context, x, y, 1, StandIcons.DANGER_YAP, PowerIndex.SKILL_1);
-
-        /**It is sneak because all stands share this cooldown and SP/TW
-         * shared it between dash and stand leap*/
-        setSkillIcon(context, x, y, 2, StandIcons.MINING_YAP, PowerIndex.SKILL_2);
-        setSkillIcon(context, x, y, 3, StandIcons.DODGE, PowerIndex.GLOBAL_DASH);
-        setSkillIcon(context, x, y, 4, StandIcons.YAP_YAP, PowerIndex.SKILL_4);
-
-        super.renderIcons(context, x, y);
-    }
-
-    @Override
-    public void powerActivate(PowerContext context) {
-        /**Making dash usable on both key presses*/
-        switch (context)
-        {
-            case SKILL_1_NORMAL, SKILL_1_CROUCH -> {
-                toggleDangerYapClient();
-            }
-            case SKILL_2_NORMAL, SKILL_2_CROUCH -> {
-                miningYapClient();
-            }
-            case SKILL_3_NORMAL, SKILL_3_CROUCH -> {
-                dash();
-            }
-            case SKILL_4_NORMAL, SKILL_4_CROUCH -> {
-                yapClient();
-            }
-        }
-    }
-
-    @Override
-    public boolean setPowerOther(int move, int lastMove) {
-        switch (move)
-        {
-            case PowerIndex.POWER_1 -> {
-                return switchDangerMode();
-            }
-            case PowerIndex.POWER_4 -> {
-                return doYap();
-            }
-            case PowerIndex.POWER_2 -> {
-                return scoutForOresOnClient();
-            }
-        }
-        return super.setPowerOther(move,lastMove);
-    }
-
-    public void toggleDangerYapClient(){
-        this.tryPower(PowerIndex.POWER_1, true);
-        tryPowerPacket(PowerIndex.POWER_1);
-    }
-    public void miningYapClient(){
-        if (!this.onCooldown(PowerIndex.SKILL_2)) {
-            this.tryPower(PowerIndex.POWER_2, true);
-            tryPowerPacket(PowerIndex.POWER_2);
-        }
-    }
-    public void yapClient(){
-        if (!this.onCooldown(PowerIndex.SKILL_4)) {
-            this.tryPower(PowerIndex.POWER_4, true);
-            tryPowerPacket(PowerIndex.POWER_4);
-        }
-    }
-    /**Let the client brunt the task of mass scanning blocks so it doesn't lag server TPS
-     * also instill block limits so the packet count is sane*/
-    public boolean scoutForOresOnClient(){
-        this.setCooldown(PowerIndex.SKILL_2,ClientNetworking.getAppropriateConfig().heyYaSettings.oreDetectionCooldown);
-        if (isClient()){
-            int range = ClientNetworking.getAppropriateConfig().heyYaSettings.oreDetectionRadius;
-            int oremaxout = 0;
-            int oremaxoutMax = ClientNetworking.getAppropriateConfig().heyYaSettings.oreDetectionMaximum;
-            for (int x = -range; x < range; x++){
-                for (int y = -range; y < range; y++){
-                    for (int z = -range; z < range; z++){
-                        BlockPos pos = this.self.blockPosition().offset(new BlockPos(x,y,z));
-                        BlockState blk = this.self.level().getBlockState(pos);
-                        if (MainUtil.confirmIsOre(blk)){
-                            if (confirmSpace(pos.below()) || confirmSpace(pos.east()) ||
-                                    confirmSpace(pos.west()) || confirmSpace(pos.north()) ||
-                                    confirmSpace(pos.south()) || confirmSpace(pos.above())){
-                                oremaxout++;
-                                if (oremaxout >= oremaxoutMax){
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            yapSounds();
-                if (isEvilYapper()){
-                    ((ServerPlayer) this.self).displayClientMessage(Component.translatable("text.roundabout.hey_ya_messaging.mining.evil.no_"+(Mth.floor(Math.random() * ClientNetworking.getAppropriateConfig().heyYaSettings.numberOfEvilMiningYapLines)+1)).withStyle(ChatFormatting.GOLD), true);
-                } else {
-                    ((ServerPlayer) this.self).displayClientMessage(Component.translatable("text.roundabout.hey_ya_messaging.mining.no_"+(Mth.floor(Math.random() * ClientNetworking.getAppropriateConfig().heyYaSettings.numberOfMiningYapLines)+1)).withStyle(ChatFormatting.GOLD), true);
-                }
-        }
-        return true;
-    }
-
-    public void yapSounds(){
-
-        if (!isYapping()){
-            setYapTime(40);
-            getStandUserSelf().roundabout$setStandAnimation(YAP);
-            playStandUserOnlySoundsIfNearby((byte) (71 + Mth.floor(Math.random() * 7)), 100, false, true);
-        }
-    }
-
-    /**if the block is legal to replace, send packet to server which will confirm if it is*/
-    public boolean confirmSpace(BlockPos pos){
-        BlockState state = this.self.level().getBlockState(pos);
-        if (state.isAir() || state.is(Blocks.WATER)
-        ){
-            tryBlockPosPowerPacket(PowerIndex.POWER_4_BONUS,pos);
-
-            return true;
-        }
-        return false;
-    }
-
-
-    int ticksSinceLastYap = 0;
-    int maxTicksSinceLastYap = 400;
 
     @Override
     public void tickStandRejection(MobEffectInstance effect) {
@@ -200,94 +65,6 @@ public class PowersHeyYa extends NewDashPreset {
             }
         }
     }
-    @Override
-    public void tickMobAI(LivingEntity attackTarget){
-        ticksSinceLastYap--;
-        if (!hasStandActive(this.self)){
-            ((IMob)this.self).roundabout$setRetractTicks(500);
-            getStandUserSelf().roundabout$summonStand(this.self.level(),true,false);
-        }
-        if (ticksSinceLastYap <= 0){
-            yapSounds();
-            ticksSinceLastYap = maxTicksSinceLastYap;
-        }
-    }
-
-    public void tryHighlightOre(BlockPos pos){
-        BlockState state = this.self.level().getBlockState(pos);
-        if (state.isAir()
-        ){
-            this.self.level().setBlockAndUpdate(pos, ModBlocks.MINING_ALERT_BLOCK.defaultBlockState().setValue(MiningAlertBlock.WATERLOGGED, Boolean.valueOf(false)));
-        } else if ( state.is(Blocks.WATER)){
-            this.self.level().setBlockAndUpdate(pos, ModBlocks.MINING_ALERT_BLOCK.defaultBlockState().setValue(MiningAlertBlock.WATERLOGGED, Boolean.valueOf(true)));
-        }
-    }
-
-    public boolean switchDangerMode(){
-        getStandUserSelf().roundabout$setUniqueStandModeToggle(!dangerYappingOn());
-        return true;
-    }
-    public boolean doYap(){
-        this.setCooldown(PowerIndex.SKILL_4,ClientNetworking.getAppropriateConfig().heyYaSettings.yapCooldown);
-        if (!isClient()){
-            yapSounds();
-            if (isEvilYapper()){
-                ((ServerPlayer) this.self).displayClientMessage(Component.translatable("text.roundabout.hey_ya_messaging.evil.no_"+(Mth.floor(Math.random() * ClientNetworking.getAppropriateConfig().heyYaSettings.numberOfEvilYapLines)+1)).withStyle(ChatFormatting.GOLD), true);
-            } else {
-                ((ServerPlayer) this.self).displayClientMessage(Component.translatable("text.roundabout.hey_ya_messaging.no_"+(Mth.floor(Math.random() * ClientNetworking.getAppropriateConfig().heyYaSettings.numberOfYapLines)+1)).withStyle(ChatFormatting.GOLD), true);
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public boolean tryBlockPosPower(int move, boolean forced,  BlockPos Pos) {
-        switch (move) {
-            case PowerIndex.POWER_4_BONUS -> {
-                /**The server accepts the block pos of the ore the client detected*/
-                tryHighlightOre(Pos);
-                return true;
-            }
-        }
-        return super.tryPower(move, forced);
-    }
-    @Override
-    public boolean tryPower(int move, boolean forced) {
-        return super.tryPower(move, forced);
-    }
-
-    @Override
-    public boolean isAttackIneptVisually(byte activeP, int slot) {
-        return super.isAttackIneptVisually(activeP, slot);
-    }
-
-
-    @Override
-    public void tickPower() {
-        if (!isClient()) {
-            if (isYapping()) {
-                getStandUserSelf().roundabout$setStandAnimation(YAP);
-            } else {
-                getStandUserSelf().roundabout$setStandAnimation(NONE);
-            }
-            tickYapping();
-        }
-        /**Yap animation based on using power*/
-        super.tickPower();
-    }
-
-
-    @Override
-    public void updateIntMove(int in) {
-
-        super.updateIntMove(in);
-    }
-
-    @Override
-    public void updateUniqueMoves() {
-        super.updateUniqueMoves();
-    }
-
 
     @Override
     public boolean isSecondaryStand(){
@@ -302,28 +79,7 @@ public class PowersHeyYa extends NewDashPreset {
         {
             case SoundIndex.SUMMON_SOUND -> {
                 return ModSounds.HEY_YA_SUMMON_EVENT;
-            }
-            case YAP_1 -> {
-                return ModSounds.HEY_YA_1_EVENT;
-            }
-            case YAP_2 -> {
-                return ModSounds.HEY_YA_2_EVENT;
-            }
-            case YAP_3 -> {
-                return ModSounds.HEY_YA_3_EVENT;
-            }
-            case YAP_4 -> {
-                return ModSounds.HEY_YA_4_EVENT;
-            }
-            case YAP_5 -> {
-                return ModSounds.HEY_YA_5_EVENT;
-            }
-            case YAP_6 -> {
-                return ModSounds.HEY_YA_6_EVENT;
-            }
-            case YAP_7 -> {
-                return ModSounds.HEY_YA_7_EVENT;
-            }
+            
         }
         return super.getSoundFromByte(soundChoice);
     }
